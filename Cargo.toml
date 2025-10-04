@@ -1,0 +1,9 @@
+[package]
+name = "fvd_replay_parser_cli"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+aoe2rec = { path = "../../../aoe2rec/crates/aoe2rec" }
+serde = { version = "1.0.214", features = ["derive"] }
+serde_json = "1.0"
