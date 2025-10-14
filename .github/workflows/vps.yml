@@ -7,6 +7,7 @@ on:
 
 env:
   RUST_TARGET: x86_64-unknown-linux-gnu
+  REPOS_PATH: /home/runner/work/fvd_replay_parser_cli/fvd_replay_parser_cli
 
 jobs:
   build-linux:
@@ -23,22 +24,23 @@ jobs:
 
       - name: Replace text using sed
         run: |
-          sed -i 's#\"../../../aoe2rec/crates/aoe2rec\"#\"/home/runner/work/aoe2rec/crates/aoe2rec\"#g' /home/runner/work/fvd_replay_parser_cli/fvd_replay_parser_cli/Cargo.toml
+          sed -i 's#\"../../../aoe2rec/crates/aoe2rec\"#\"/home/runner/work/aoe2rec/crates/aoe2rec\"#g' ${{ env.REPOS_PATH }}/fvd_replay_parser_cli/Cargo.toml
 
       - name: Build release binary
         run: cargo build --release 
+        working-directory: ./fvd_replay_parser_cli
 
       - name: Build release binary
-        run: ls  /home/runner/work/fvd_replay_parser_cli/fvd_replay_parser_cli/target
+        run: ls  ${{ env.REPOS_PATH }}/fvd_replay_parser_cli/target
 
       - name: Build release binary
-        run: ls  /home/runner/work/fvd_replay_parser_cli/fvd_replay_parser_cli/target/release
+        run: ls  ${{ env.REPOS_PATH }}/fvd_replay_parser_cli/target/release
       #        
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: rust-musl-binary
-          path: target/release/fvd_replay_parser_cli
+          path: ./fvd_replay_parser_cli/target/release/fvd_replay_parser_cli
 
       - name: Configure SSH
         run: |
@@ -70,7 +72,7 @@ jobs:
       - name: Copy config file
         run: |
           ssh vps << EOF
-            cp target/release/fvd_replay_parser_cli /srv/www/fvd/fvd_replay_parser_cli
+            cp ./fvd_replay_parser_cli/target/release/fvd_replay_parser_cli /srv/www/fvd/fvd_replay_parser_cli
           EOF
 
       # Remove shh files
