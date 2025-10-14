@@ -3,6 +3,9 @@ name: Build and deploy to VPS
 on:
   workflow_dispatch:
 
+env:
+  RUST_TARGET: x86_64-unknown-linux-gnu
+
 jobs:
   build-linux:
     runs-on: ubuntu-latest
@@ -21,18 +24,18 @@ jobs:
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
-          target: x86_64-unknown-linux-musl
+          target: ${{ env.RUST_TARGET }}
           override: true
 
       - name: Build release binary
-        run: cargo build --release --target x86_64-unknown-linux-musl
+        run: cargo build --release --target ${{ env.RUST_TARGET }}
 
       #        
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: rust-musl-binary
-          path: target/x86_64-unknown-linux-musl/release/fvd_replay_parser_cli
+          path: target/${{ env.RUST_TARGET }}/release/fvd_replay_parser_cli
 
       - name: Configure SSH
         run: |
@@ -64,7 +67,7 @@ jobs:
       - name: Copy config file
         run: |
           ssh vps << EOF
-            cp target/x86_64-unknown-linux-musl/release/fvd_replay_parser_cli /srv/www/fvd/fvd_replay_parser_cli
+            cp target/${{ env.RUST_TARGET }}/release/fvd_replay_parser_cli /srv/www/fvd/fvd_replay_parser_cli
           EOF
 
       # Remove shh files
