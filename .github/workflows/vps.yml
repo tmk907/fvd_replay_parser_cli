@@ -21,6 +21,7 @@ jobs:
         with:
           repository: 'tmk907/aoe2rec'
           path: 'aoe2rec'
+          ref: fvd-parser
 
       # - name: Replace text using sed
       #   run: |
