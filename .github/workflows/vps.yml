@@ -22,9 +22,9 @@ jobs:
           repository: 'tmk907/aoe2rec'
           path: 'aoe2rec'
 
-      - name: Replace text using sed
-        run: |
-          sed -i 's#\"../../../aoe2rec/crates/aoe2rec\"#\"/home/runner/work/aoe2rec/crates/aoe2rec\"#g' ${{ env.REPOS_PATH }}/fvd_replay_parser_cli/Cargo.toml
+      # - name: Replace text using sed
+      #   run: |
+      #     sed -i 's#\"../../../aoe2rec/crates/aoe2rec\"#\"/home/runner/work/aoe2rec/crates/aoe2rec\"#g' ${{ env.REPOS_PATH }}/fvd_replay_parser_cli/Cargo.toml
 
       - name: Build release binary
         run: cargo build --release 
