@@ -9,7 +9,7 @@ env:
   REPOS_PATH: /home/runner/work/fvd_replay_parser_cli/fvd_replay_parser_cli
 
 jobs:
-  build-linux:
+  build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -47,12 +47,12 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: fvd_replay_parser_cli
+          name: ${{ matrix.bin_name }}
           path: ./fvd_replay_parser_cli/target/${{ matrix.target }}/release/${{ matrix.bin_name }}
           
   transfer-vps:
     runs-on: ubuntu-latest
-    needs: build-linux
+    needs: build
     steps:
       - name: Download binary
         uses: actions/download-artifact@v4
