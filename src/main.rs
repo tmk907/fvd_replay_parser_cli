@@ -66,10 +66,10 @@ pub fn parse(path: String) -> GameInfo {
             .collect();
     wall_players.sort();
 
-    // let actions: Vec<ActionData> = getPlayerActions(&savegame, 8);
-    // let c =  countPlayerActions(&savegame, 8);
+    // let actions: Vec<ActionData> = get_player_actions(&savegame, 8);
+    // let c =  count_player_actions(&savegame, 8);
 
-    let mut resigned:Vec<u8> = savegame.operations
+    let resigned:Vec<u8> = savegame.operations
         .iter()
         .filter_map(|op| {
             if let Operation::Action { action_data, .. } = op {
@@ -84,7 +84,7 @@ pub fn parse(path: String) -> GameInfo {
         .cloned()            
         .collect();
 
-    let mut chapter:Vec<u8> = savegame.operations
+    let chapter:Vec<u8> = savegame.operations
         .iter()
         .filter_map(|op| {
             if let Operation::Action { action_data, .. } = op {
@@ -108,7 +108,7 @@ pub fn parse(path: String) -> GameInfo {
             resigned: resigned.contains(&(team_player.info.player_number.try_into().unwrap_or(100))),
             name: String::from(&team_player.info.name),
             builder: wall_players.contains(&(team_player.info.player_number.try_into().unwrap_or(100))),
-            actions: countPlayerActions(&savegame, team_player.info.player_number.try_into().unwrap_or(100)) as i32,
+            actions: count_player_actions(&savegame, team_player.info.player_number.try_into().unwrap_or(100)) as i32,
             chapter: chapter.contains(&(team_player.info.player_number.try_into().unwrap_or(100))),
         })
         .collect();
@@ -122,7 +122,7 @@ pub fn parse(path: String) -> GameInfo {
 
 }
 
-fn getPlayerActions(savegame: &Savegame, player_id: u8) -> Vec<ActionData> {
+fn get_player_actions(savegame: &Savegame, player_id: u8) -> Vec<ActionData> {
     savegame.operations
         .iter()
         .filter_map(|op| {
@@ -140,7 +140,7 @@ fn getPlayerActions(savegame: &Savegame, player_id: u8) -> Vec<ActionData> {
         .collect()
 }
 
-fn countPlayerActions(savegame: &Savegame, player_id: u8) -> usize {
+fn count_player_actions(savegame: &Savegame, player_id: u8) -> usize {
     savegame.operations
         .iter()
         .filter(|op| {

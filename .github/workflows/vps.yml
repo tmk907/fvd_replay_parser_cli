@@ -28,6 +28,10 @@ jobs:
 
       - name: Build release binary
         run: cargo build --release 
+        working-directory: ./aoe2rec/crates/aoe2rec
+
+      - name: Build release binary
+        run: cargo build --release 
         working-directory: ./fvd_replay_parser_cli
 
       - name: Build release binary
