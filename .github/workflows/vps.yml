@@ -67,12 +67,11 @@ jobs:
           SSH_KEY: ${{ secrets.SERVER_KEY }}
           SSH_HOST: ${{ secrets.SERVER_HOST }}
 
-      # Copy confg file
-      - name: Copy config file
+      # Transfer file
+      - name: Copy Dockerfile
         run: |
-          ssh vps << EOF
-            cp ${{ env.REPOS_PATH }}/fvd_replay_parser_cli/target/${{ env.RUST_TARGET }}/release/fvd_replay_parser_cli /srv/www/fvd/fvd_replay_parser_cli
-          EOF
+          ssh vps "mkdir -p /srv/www/fvd"
+          scp "${{ env.REPOS_PATH }}/fvd_replay_parser_cli/target/${{ env.RUST_TARGET }}/release/fvd_replay_parser_cli" vps:"/srv/www/fvd"
 
       # Remove shh files
       - name: Remove ssh files
