@@ -1,0 +1,67 @@
+name: Build and deploy to VPS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust with musl target
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          target: x86_64-unknown-linux-musl
+          override: true
+
+      - name: Build release binary
+        run: cargo build --release --target x86_64-unknown-linux-musl
+
+      #        
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: rust-musl-binary
+          path: target/x86_64-unknown-linux-musl/release/fvd_replay_parser_cli
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          chmod 700 ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          cat >>~/.ssh/config <<END
+          Host vps
+              HostName $SSH_HOST
+              User $SSH_USER
+              IdentityFile ~/.ssh/id_ed25519
+              StrictHostKeyChecking no
+              IdentitiesOnly yes
+              PasswordAuthentication no
+          END
+        env:
+          SSH_USER: ${{ secrets.SERVER_USERNAME }}
+          SSH_KEY: ${{ secrets.SERVER_KEY }}
+          SSH_HOST: ${{ secrets.SERVER_HOST }}
+      
+      # Transfer Dockerfile
+      # - name: Copy Dockerfile
+      #   run: |
+      #     ssh vps "mkdir -p /srv/www/fvd"
+      #     scp "$projectDir/Dockerfile" vps:"/srv/www/fvd"
+
+      # Copy confg file
+      - name: Copy config file
+        run: |
+          ssh vps << EOF
+            cp target/x86_64-unknown-linux-musl/release/fvd_replay_parser_cli /srv/www/fvd/fvd_replay_parser_cli
+          EOF
+
+      # Remove shh files
+      - name: Remove ssh files
+        run: |
+          rm ~/.ssh/id_ed25519
+          rm ~/.ssh/config
+          
