@@ -2,6 +2,8 @@ name: Build and deploy to VPS
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ main ]
 
 env:
   RUST_TARGET: x86_64-unknown-linux-gnu
@@ -19,12 +21,6 @@ jobs:
       - name: Replace text using sed
         run: |
           sed -i 's#\"../../../aoe2rec/crates/aoe2rec\"#\"/home/runner/work/aoe2rec/crates/aoe2rec\"#g' /home/runner/work/fvd_replay_parser_cli/fvd_replay_parser_cli/Cargo.toml
-
-      - name: Install Rust with musl target
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: stable
-          override: true
 
       - name: Build release binary
         run: cargo build --release 
