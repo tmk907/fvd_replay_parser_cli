@@ -6,12 +6,18 @@ on:
     branches: [ main ]
 
 env:
-  RUST_TARGET: x86_64-unknown-linux-musl
   REPOS_PATH: /home/runner/work/fvd_replay_parser_cli/fvd_replay_parser_cli
 
 jobs:
   build-linux:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-musl
+            bin_name: fvd_replay_parser_cli
+          - target: x86_64-pc-windows-gnu
+            bin_name: fvd_replay_parser_cli.exe
     steps:
       - uses: actions/checkout@v4
         with:
@@ -23,29 +29,32 @@ jobs:
           path: 'aoe2rec'
           ref: fvd-parser
 
-      # - name: Install Rust
-      #   uses: actions-rust-lang/setup-rust-toolchain@v1
-      #   with:
-      #     toolchain: stable
-      #     target: ${{ env.RUST_TARGET }}
-      #     override: true
-
       - name: Add musl target
-        run: rustup target add ${{ env.RUST_TARGET }}
+        run: rustup target add ${{ matrix.target }}
 
       - name: Build release binary
-        run: cargo build --release --target ${{ env.RUST_TARGET }}
+        run: cargo build --release --target ${{ matrix.target }}
         working-directory: ./fvd_replay_parser_cli
 
       - name: Show source tree
         run: tree -L 4
         working-directory: ./fvd_replay_parser_cli
-      #        
+    
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: fvd_replay_parser_cli
-          path: ./fvd_replay_parser_cli/target/${{ env.RUST_TARGET }}/release/fvd_replay_parser_cli
+          path: ./fvd_replay_parser_cli/target/${{ matrix.target }}/release/${{ matrix.bin_name }}
+          
+  transfer-vps:
+    runs-on: ubuntu-latest
+    needs: build-linux
+    steps:
+      - name: Download binary
+        uses: actions/download-artifact@v4
+        with:
+          name: fvd_replay_parser_cli
+          path: ./downloaded
 
       - name: Configure SSH
         run: |
@@ -68,14 +77,13 @@ jobs:
           SSH_HOST: ${{ secrets.SERVER_HOST }}
 
       # Transfer file
-      - name: Copy Dockerfile
+      - name: Transfer file
         run: |
           ssh vps "mkdir -p /srv/www/fvd"
-          scp "${{ env.REPOS_PATH }}/fvd_replay_parser_cli/target/${{ env.RUST_TARGET }}/release/fvd_replay_parser_cli" vps:"/srv/www/fvd"
+          scp "./downloaded/fvd_replay_parser_cli" vps:"/srv/www/fvd"
 
       # Remove shh files
       - name: Remove ssh files
         run: |
           rm ~/.ssh/id_ed25519
           rm ~/.ssh/config
-          
