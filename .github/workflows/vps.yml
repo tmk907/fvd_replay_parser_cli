@@ -23,12 +23,15 @@ jobs:
           path: 'aoe2rec'
           ref: fvd-parser
 
-      - name: Install Rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: stable
-          target: ${{ env.RUST_TARGET }}
-          override: true
+      # - name: Install Rust
+      #   uses: actions-rust-lang/setup-rust-toolchain@v1
+      #   with:
+      #     toolchain: stable
+      #     target: ${{ env.RUST_TARGET }}
+      #     override: true
+
+      - name: Add musl target
+        run: rustup target add ${{ env.RUST_TARGET }}
 
       - name: Build release binary
         run: cargo build --release 
