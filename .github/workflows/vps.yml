@@ -25,6 +25,11 @@ jobs:
       - name: Build release binary
         run: cargo build --release 
 
+      - name: Build release binary
+        run: ls  /home/runner/work/fvd_replay_parser_cli/fvd_replay_parser_cli/target
+
+      - name: Build release binary
+        run: ls  /home/runner/work/fvd_replay_parser_cli/fvd_replay_parser_cli/target/release
       #        
       - name: Upload artifact
         uses: actions/upload-artifact@v4
