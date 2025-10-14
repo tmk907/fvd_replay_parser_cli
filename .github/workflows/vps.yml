@@ -26,19 +26,17 @@ jobs:
       #   run: |
       #     sed -i 's#\"../../../aoe2rec/crates/aoe2rec\"#\"/home/runner/work/aoe2rec/crates/aoe2rec\"#g' ${{ env.REPOS_PATH }}/fvd_replay_parser_cli/Cargo.toml
 
-      - name: Build release binary
-        run: cargo build --release 
-        working-directory: ./aoe2rec/crates/aoe2rec
+      - name: Show source tree
+        run: tree -L 3
+        working-directory: ./fvd_replay_parser_cli
 
       - name: Build release binary
         run: cargo build --release 
         working-directory: ./fvd_replay_parser_cli
 
-      - name: Build release binary
-        run: ls  ${{ env.REPOS_PATH }}/fvd_replay_parser_cli/target
-
-      - name: Build release binary
-        run: ls  ${{ env.REPOS_PATH }}/fvd_replay_parser_cli/target/release
+      - name: Show source tree
+        run: tree -L 3
+        working-directory: ./fvd_replay_parser_cli
       #        
       - name: Upload artifact
         uses: actions/upload-artifact@v4
