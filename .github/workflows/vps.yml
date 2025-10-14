@@ -34,11 +34,11 @@ jobs:
         run: rustup target add ${{ env.RUST_TARGET }}
 
       - name: Build release binary
-        run: cargo build --release 
+        run: cargo build --release --target ${{ env.RUST_TARGET }}
         working-directory: ./fvd_replay_parser_cli
 
       - name: Show source tree
-        run: tree -L 4
+        run: tree -L 3
         working-directory: ./fvd_replay_parser_cli
       #        
       - name: Upload artifact
