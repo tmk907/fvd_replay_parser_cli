@@ -13,10 +13,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          path: 'fvd_replay_parser_cli'
 
       - uses: actions/checkout@v4
         with:
           repository: 'tmk907/aoe2rec'
+          path: 'aoe2rec'
 
       - name: Replace text using sed
         run: |
