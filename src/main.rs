@@ -186,7 +186,7 @@ impl HasPlayerId for ActionData {
             | ActionData::Autoscout { player_id, .. }
             | ActionData::DeUnknown39 { player_id, .. }
             | ActionData::Unknown41 { player_id, .. }
-            | ActionData::Unknown43 { player_id, .. }
+            | ActionData::SwitchAttack { player_id, .. }
             | ActionData::Unknown44 { player_id, .. }
             | ActionData::Unknown45 { player_id, .. }
             | ActionData::AiCommand { player_id, .. }
@@ -216,6 +216,7 @@ impl HasPlayerId for ActionData {
             | ActionData::DeUnknown135 { player_id, .. }
             | ActionData::DeUnknown140 { player_id, .. }
             | ActionData::DeUnknown196 { player_id, .. }
+            | ActionData::Unknown104 { player_id, .. }
             | ActionData::Achievements { player_id, .. } => Some(*player_id),
             ActionData::Game(_) => None,
         }
