@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "aoe2rec"
-version = "0.5.1"
+version = "0.7.0"
 dependencies = [
  "binrw",
  "bytes",

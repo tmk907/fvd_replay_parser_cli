@@ -29,10 +29,11 @@ fn main() {
     }
     let file_path = &args[1];
 
-    // let file_name = "AgeIIDE_Replay_422884788.aoe2record";
+    // let file_name = "MP Replay v101.103.38337.0 @2026.02.21 170707 (7).aoe2record";
     // let file_path = format!(
-    //     "C:/Source/Data/FVDLeaderboard/replays/{}",
-    //     // "C:/Users/tomek/Games/Age of Empires 2 DE/76561198073652290/savegame/{}",
+    //     // "C:/Source/Data/FVDLeaderboard/replays/savedchapter/{}",
+    //     "C:/Users/tomek/Games/Age of Empires 2 DE/76561198073652290/savegame/{}",
+    //     // "C:/Source/Repos/FVDLeaderBoards/ReplayParser/aoe2rec/files/{}",
     //     file_name
     // );
 
@@ -47,6 +48,31 @@ pub fn parse(path: String) -> GameInfo {
 
     let s = savegame.get_summary();
     let teams = s.teams;
+
+    // Collect all chat messages as plain Strings using the `LenString`'s `Serialize` impl.
+    // We can't access `text.value` (it's private), so serialize to `serde_json::Value`
+    // and extract the string produced by the `LenString` serializer.
+    // let chat_texts: Vec<String> = savegame
+    //     .operations
+    //     .iter()
+    //     .filter_map(|op| {
+    //         if let Operation::Chat { text, .. } = op {
+    //             match serde_json::to_value(text) {
+    //                 Ok(serde_json::Value::String(s)) => Some(s),
+    //                 Ok(other) => Some(other.to_string()),
+    //                 Err(_) => Some(format!("{:?}", text)),
+    //             }
+    //         } else {
+    //             None
+    //         }
+    //     })
+    //     .collect();
+    // Print collected chat messages to console
+    // for (i, txt) in chat_texts.iter().enumerate() {
+    //     println!("chat[{}]: {}", i, txt);
+    // }
+
+    
 
     let mut wall_players:Vec<u8> = savegame.operations
             .iter()
@@ -122,23 +148,23 @@ pub fn parse(path: String) -> GameInfo {
 
 }
 
-fn get_player_actions(savegame: &Savegame, player_id: u8) -> Vec<ActionData> {
-    savegame.operations
-        .iter()
-        .filter_map(|op| {
-            if let Operation::Action { action_data, .. } = op {
-                if action_data.player_id() == Some(player_id) {
-                    Some(action_data)
-                } else {
-                    None
-                }
-            } else {
-                None
-            }
-        })
-        .cloned()            
-        .collect()
-}
+// fn get_player_actions(savegame: &Savegame, player_id: u8) -> Vec<ActionData> {
+//     savegame.operations
+//         .iter()
+//         .filter_map(|op| {
+//             if let Operation::Action { action_data, .. } = op {
+//                 if action_data.player_id() == Some(player_id) {
+//                     Some(action_data)
+//                 } else {
+//                     None
+//                 }
+//             } else {
+//                 None
+//             }
+//         })
+//         .cloned()            
+//         .collect()
+// }
 
 fn count_player_actions(savegame: &Savegame, player_id: u8) -> usize {
     savegame.operations
