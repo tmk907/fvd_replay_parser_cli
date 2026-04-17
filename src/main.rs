@@ -1,4 +1,4 @@
-use std::{env, process, collections::HashSet, path::Path};
+use std::{collections::HashSet, env, ops, path::Path, process};
 use aoe2rec::actions::ActionData;
 use serde::Serialize;
 use aoe2rec::{*};
@@ -23,24 +23,30 @@ pub struct PlayerInfo {
 fn main() {
     let args: Vec<String> = env::args().collect();
     // Expect the file path as the first argument
-    if args.len() < 2 {
-        eprintln!("Usage: rust_app <path_to_file>");
-        process::exit(1);
-    }
-    let file_path = &args[1];
+    // if args.len() < 2 {
+    //     eprintln!("Usage: rust_app <path_to_file>");
+    //     process::exit(1);
+    // }
+    // let file_path = &args[1];
 
     // let file_name = "MP Replay v101.103.38337.0 @2026.02.21 170707 (7).aoe2record";
-    // let file_path = format!(
-    //     // "C:/Source/Data/FVDLeaderboard/replays/savedchapter/{}",
-    //     "C:/Users/tomek/Games/Age of Empires 2 DE/76561198073652290/savegame/{}",
-    //     // "C:/Source/Repos/FVDLeaderBoards/ReplayParser/aoe2rec/files/{}",
-    //     file_name
-    // );
+    let file_name = "MP Replay v101.103.39862.0 @2026.04.16 212054 (8).aoe2record";
+    let folder_path = "C:/Source/Data/FVDLeaderboard/analyze/";
+    let file_path = format!(
+        // "C:/Source/Data/FVDLeaderboard/replays/savedchapter/{}",
+        "C:/Users/tomek/Games/Age of Empires 2 DE/76561198073652290/savegame/{}",
+        // "C:/Source/Repos/FVDLeaderBoards/ReplayParser/aoe2rec/files/{}",
+        file_name
+    );
 
-    let game_info = parse(file_path.to_string());
-    let json = serde_json::to_string_pretty(&game_info).unwrap();
+    let ops = parse_operations(file_path.to_string(), 200000, true);
+    let output_path = Path::new(folder_path).join("ops.json");
+    std::fs::write(output_path, ops.join("\n")).unwrap();
 
-    println!("{}", json);
+    // let game_info = parse(file_path.to_string());
+    // let json = serde_json::to_string_pretty(&game_info).unwrap();
+
+    // println!("{}", json);
 }
 
 pub fn parse(path: String) -> GameInfo {
@@ -145,7 +151,47 @@ pub fn parse(path: String) -> GameInfo {
     };
 
     return game_info;
+}
 
+pub fn parse_operations(path: String, max_operations: usize, ignore_sync: bool) -> Vec<String> {
+    let savegame = Savegame::from_file(Path::new(&path)).unwrap();
+
+    savegame
+        .operations
+        .iter()
+        .take(max_operations)
+        .filter_map(|op| match op {
+            Operation::Chat { text, .. } => {
+                let text_value = serde_json::to_value(text)
+                    .ok()
+                    .and_then(|value| value.as_str().map(|s| s.to_string()))
+                    .unwrap_or_else(|| format!("{:?}", text));
+                Some(format!("Chat, {}", text_value))
+            }
+            Operation::Viewlock { .. } => None,
+            Operation::Sync { .. } if ignore_sync => None,
+            // Operation::Action { action_data, .. } => {
+            //     let op_name = action_data_name(action_data);
+            //     let player_id = action_data.player_id().map(|id| id.to_string()).unwrap_or_default();
+            //     if player_id.is_empty() {
+            //         Some(format!("{}", op_name))
+            //     } else {
+            //         Some(format!("{},{}", op_name, player_id))
+            //     }
+            // }
+            other => Some(format!("{:?}", other)),
+        })
+        .collect()
+}
+
+fn action_data_name(action_data: &ActionData) -> String {
+    let debug = format!("{:?}", action_data);
+    debug
+        .split('{')
+        .next()
+        .unwrap_or(&debug)
+        .trim()
+        .to_string()
 }
 
 // fn get_player_actions(savegame: &Savegame, player_id: u8) -> Vec<ActionData> {
@@ -211,7 +257,7 @@ impl HasPlayerId for ActionData {
             | ActionData::DeUnknown37 { player_id, .. }
             | ActionData::Autoscout { player_id, .. }
             | ActionData::DeUnknown39 { player_id, .. }
-            | ActionData::Unknown41 { player_id, .. }
+            | ActionData::Transform { player_id, .. }
             | ActionData::SwitchAttack { player_id, .. }
             | ActionData::Unknown44 { player_id, .. }
             | ActionData::Unknown45 { player_id, .. }
@@ -243,8 +289,8 @@ impl HasPlayerId for ActionData {
             | ActionData::DeUnknown140 { player_id, .. }
             | ActionData::DeUnknown196 { player_id, .. }
             | ActionData::Unknown104 { player_id, .. }
-            | ActionData::Achievements { player_id, .. } => Some(*player_id),
-            ActionData::Game(_) => None,
+            | ActionData::Achievements { player_id, .. }
+            | ActionData::Game { player_id,..} => Some(*player_id),
         }
     }
 }
