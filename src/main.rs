@@ -166,20 +166,36 @@ pub fn parse_operations(path: String, max_operations: usize, ignore_sync: bool) 
                     .ok()
                     .and_then(|value| value.as_str().map(|s| s.to_string()))
                     .unwrap_or_else(|| format!("{:?}", text));
-                Some(format!("Chat, {}", text_value))
+                Some(format!("{{ \"Chat\": {} }}", text_value))
             }
+            // Operation::Chat { .. } => {
+            //     let json = serde_json::to_string(op)
+            //         .unwrap_or_else(|_| format!("{:?}", op));
+            //     Some(json)
+            // }
             Operation::Viewlock { .. } => None,
             Operation::Sync { .. } if ignore_sync => None,
-            // Operation::Action { action_data, .. } => {
-            //     let op_name = action_data_name(action_data);
-            //     let player_id = action_data.player_id().map(|id| id.to_string()).unwrap_or_default();
-            //     if player_id.is_empty() {
-            //         Some(format!("{}", op_name))
-            //     } else {
-            //         Some(format!("{},{}", op_name, player_id))
-            //     }
+            Operation::Sync { .. } => {
+                let json = serde_json::to_string(op)
+                    .unwrap_or_else(|_| format!("{:?}", op));
+                Some(json)
+            }
+            Operation::Action { .. } => {
+                let json = serde_json::to_string(op)
+                    .unwrap_or_else(|_| format!("{:?}", op));
+                Some(json)
+            }
+            // Operation::Action { length, action_data, world_time, chap } => {
+            //     let action_json = serde_json::json!({
+            //         "length": length,
+            //         "action_data": action_data,
+            //         "world_time": world_time,
+            //         "chap": chap,
+            //     });
+            //     Some(format!("Action {}", action_json.to_string()))
             // }
             other => Some(format!("{:?}", other)),
+            // other => None,
         })
         .collect()
 }
