@@ -1,4 +1,4 @@
-use std::{collections::HashSet, env, ops, path::Path, process};
+use std::{collections::HashSet, env, ops,fs::File,io::Write, path::Path, process};
 use aoe2rec::actions::ActionData;
 use serde::Serialize;
 use aoe2rec::{*};
@@ -29,9 +29,12 @@ fn main() {
     // }
     // let file_path = &args[1];
 
+    let summary = false;
+    let operations = true;
+    let output_file_path = "C:/Source/Data/FVDLeaderboard/analyze/ops.json";
+
     // let file_name = "MP Replay v101.103.38337.0 @2026.02.21 170707 (7).aoe2record";
-    let file_name = "MP Replay v101.103.39862.0 @2026.04.16 212054 (8).aoe2record";
-    let folder_path = "C:/Source/Data/FVDLeaderboard/analyze/";
+    let file_name = "MP Replay v101.103.39862.0 @2026.04.17 211401 (7).aoe2record";
     let file_path = format!(
         // "C:/Source/Data/FVDLeaderboard/replays/savedchapter/{}",
         "C:/Users/tomek/Games/Age of Empires 2 DE/76561198073652290/savegame/{}",
@@ -39,17 +42,37 @@ fn main() {
         file_name
     );
 
-    let ops = parse_operations(file_path.to_string(), 200000, true);
-    let output_path = Path::new(folder_path).join("ops.json");
-    std::fs::write(output_path, ops.join("\n")).unwrap();
 
-    // let game_info = parse(file_path.to_string());
-    // let json = serde_json::to_string_pretty(&game_info).unwrap();
+    if summary {
+        let game_info = parse_summary(file_path.to_string());
+        let json = serde_json::to_string_pretty(&game_info).unwrap();
+        if output_file_path == "" {
+            println!("{}", json);
+        } else {
+            let output_path = Path::new(output_file_path);
+            let mut file = File::create(output_path).unwrap();
+            writeln!(file, "{}", json).unwrap();
+        }
+    }
 
-    // println!("{}", json);
+    if operations {
+        let ignore_sync = true;
+        let ops = parse_operations(file_path.to_string(), 1000000, ignore_sync);
+        if output_file_path == "" {
+            for line in ops {
+                println!("{}", line);
+            }
+        } else {
+            let output_path = Path::new(output_file_path);
+            let mut file = File::create(output_path).unwrap();
+            for line in ops {
+                writeln!(file, "{}", line).unwrap();
+            }
+        }
+    }
 }
 
-pub fn parse(path: String) -> GameInfo {
+pub fn parse_summary(path: String) -> GameInfo {
     let savegame = Savegame::from_file(Path::new(&path)).unwrap();
 
     let s = savegame.get_summary();
@@ -153,51 +176,40 @@ pub fn parse(path: String) -> GameInfo {
     return game_info;
 }
 
-pub fn parse_operations(path: String, max_operations: usize, ignore_sync: bool) -> Vec<String> {
+pub fn parse_operations(path: String, max_operations: usize, ignore_sync: bool) -> impl Iterator<Item = String> {
     let savegame = Savegame::from_file(Path::new(&path)).unwrap();
 
     savegame
         .operations
-        .iter()
+        .into_iter()
         .take(max_operations)
-        .filter_map(|op| match op {
+        .filter_map(move |op| match op {
             Operation::Chat { text, .. } => {
-                let text_value = serde_json::to_value(text)
+                let text_value = serde_json::to_value(&text)
                     .ok()
                     .and_then(|value| value.as_str().map(|s| s.to_string()))
                     .unwrap_or_else(|| format!("{:?}", text));
-                Some(format!("{{ \"Chat\": {} }}", text_value))
+                Some(format!("{{\"Chat\":{}}}", text_value))
             }
             // Operation::Chat { .. } => {
             //     let json = serde_json::to_string(op)
             //         .unwrap_or_else(|_| format!("{:?}", op));
             //     Some(json)
             // }
-            Operation::Viewlock { .. } => None,
             Operation::Sync { .. } if ignore_sync => None,
             Operation::Sync { .. } => {
-                let json = serde_json::to_string(op)
+                let json = serde_json::to_string(&op)
                     .unwrap_or_else(|_| format!("{:?}", op));
                 Some(json)
             }
-            Operation::Action { .. } => {
-                let json = serde_json::to_string(op)
-                    .unwrap_or_else(|_| format!("{:?}", op));
+            Operation::Viewlock { .. } => None,        
+            other => {
+                let json = serde_json::to_string(&other)
+                    .unwrap_or_else(|_| format!("{:?}", other));
                 Some(json)
             }
-            // Operation::Action { length, action_data, world_time, chap } => {
-            //     let action_json = serde_json::json!({
-            //         "length": length,
-            //         "action_data": action_data,
-            //         "world_time": world_time,
-            //         "chap": chap,
-            //     });
-            //     Some(format!("Action {}", action_json.to_string()))
-            // }
-            other => Some(format!("{:?}", other)),
             // other => None,
         })
-        .collect()
 }
 
 fn action_data_name(action_data: &ActionData) -> String {
