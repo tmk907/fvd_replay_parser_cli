@@ -1,6 +1,7 @@
 use std::{collections::HashSet, env, ops,fs::File,io::Write, path::Path, process};
 use aoe2rec::actions::ActionData;
 use serde::Serialize;
+use argh::FromArgs;
 use aoe2rec::{*};
 
 #[derive(Serialize)]
@@ -20,53 +21,79 @@ pub struct PlayerInfo {
     chapter: bool,
 }
 
-fn main() {
-    let args: Vec<String> = env::args().collect();
-    // Expect the file path as the first argument
-    // if args.len() < 2 {
-    //     eprintln!("Usage: rust_app <path_to_file>");
-    //     process::exit(1);
-    // }
-    // let file_path = &args[1];
+#[derive(FromArgs)]
+/// Command-line arguments for the application
+pub struct ApplicationArgs {
+    /// show summary of the game
+    #[argh(switch, short = 's')]
+    summary: bool,
 
-    let summary = false;
-    let operations = true;
-    let output_file_path = "C:/Source/Data/FVDLeaderboard/analyze/ops.json";
+    /// show operations of the game
+    #[argh(switch, short = 'a')]
+    operations: bool,
+
+    /// input file path
+    #[argh(option, short = 'i')]
+    input: Option<String>,
+
+    /// output file path (optional, defaults to console output)
+    #[argh(option, short = 'o')]
+    output: Option<String>,
+}
+
+fn main() {
+    let args: ApplicationArgs = argh::from_env();
+
+    // Expect the file path as the first argument
+    if args.input.is_none() {
+        eprintln!("Usage: rust_app -i <path_to_file>");
+        process::exit(1);
+    }
+    let input_file_path = args.input.unwrap();
+
+    // let output_file_path = "C:/Source/Data/FVDLeaderboard/analyze/ops.json";
 
     // let file_name = "MP Replay v101.103.38337.0 @2026.02.21 170707 (7).aoe2record";
-    let file_name = "MP Replay v101.103.39862.0 @2026.04.17 211401 (7).aoe2record";
-    let file_path = format!(
-        // "C:/Source/Data/FVDLeaderboard/replays/savedchapter/{}",
-        "C:/Users/tomek/Games/Age of Empires 2 DE/76561198073652290/savegame/{}",
-        // "C:/Source/Repos/FVDLeaderBoards/ReplayParser/aoe2rec/files/{}",
-        file_name
-    );
+    // let file_name = "MP Replay v101.103.39862.0 @2026.04.17 211401 (7).aoe2record";
+    // let file_path = format!(
+    //     // "C:/Source/Data/FVDLeaderboard/replays/savedchapter/{}",
+    //     "C:/Users/tomek/Games/Age of Empires 2 DE/76561198073652290/savegame/{}",
+    //     // "C:/Source/Repos/FVDLeaderBoards/ReplayParser/aoe2rec/files/{}",
+    //     file_name
+    // );
 
-
-    if summary {
-        let game_info = parse_summary(file_path.to_string());
+    if args.summary {
+        let game_info = parse_summary(input_file_path.to_string());
         let json = serde_json::to_string_pretty(&game_info).unwrap();
-        if output_file_path == "" {
-            println!("{}", json);
-        } else {
-            let output_path = Path::new(output_file_path);
-            let mut file = File::create(output_path).unwrap();
-            writeln!(file, "{}", json).unwrap();
+
+        match args.output {
+            Some(ref output_file_path) => {
+                let output_path = Path::new(output_file_path);
+                let mut file = File::create(output_path).unwrap();
+                writeln!(file, "{}", json).unwrap();
+            }
+            None => {
+                println!("{}", json);
+            }
         }
     }
 
-    if operations {
+    if args.operations {
         let ignore_sync = true;
-        let ops = parse_operations(file_path.to_string(), 1000000, ignore_sync);
-        if output_file_path == "" {
-            for line in ops {
-                println!("{}", line);
+        let ops = parse_operations(input_file_path.to_string(), 1000000, ignore_sync);
+        
+        match args.output {
+            Some(ref output_file_path) => {
+                let output_path = Path::new(output_file_path);
+                let mut file = File::create(output_path).unwrap();
+                for line in ops {
+                    writeln!(file, "{}", line).unwrap();
+                }
             }
-        } else {
-            let output_path = Path::new(output_file_path);
-            let mut file = File::create(output_path).unwrap();
-            for line in ops {
-                writeln!(file, "{}", line).unwrap();
+            None => {
+                for line in ops {
+                    println!("{}", line);
+                }
             }
         }
     }
