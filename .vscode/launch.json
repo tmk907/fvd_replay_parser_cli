@@ -20,7 +20,15 @@
                     "kind": "bin"
                 }
             },
-            "args": [],
+            "args": [
+                "-s",
+                // "-f",
+                "-a",
+                "-i",
+                "C:/Users/tomek/Games/Age of Empires 2 DE/76561198073652290/savegame/AgeIIDE_Replay_475024293.aoe2record",
+                "-o",
+                "C:/Source/Data/FVDLeaderboard/analyze/ops7.json"
+            ],
             "cwd": "${workspaceFolder}"
         },
         {

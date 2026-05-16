@@ -1,4 +1,4 @@
-use std::{collections::HashSet, env, ops,fs::File,io::Write, path::Path, process};
+use std::{collections::HashSet, fs::File,io::Write, path::Path, process};
 use aoe2rec::actions::ActionData;
 use serde::Serialize;
 use argh::FromArgs;
@@ -25,6 +25,10 @@ pub struct PlayerInfo {
 /// Command-line arguments for the application
 pub struct ApplicationArgs {
     /// show summary of the game
+    #[argh(switch, short = 'f')]
+    fvd_summary: bool,
+
+    /// show full summary of the game
     #[argh(switch, short = 's')]
     summary: bool,
 
@@ -62,9 +66,27 @@ fn main() {
     //     file_name
     // );
 
-    if args.summary {
-        let game_info = parse_summary(input_file_path.to_string());
+    let savegame = Savegame::from_file(Path::new(&input_file_path)).unwrap();
+
+    if args.fvd_summary {
+        let game_info = parse_summary(&savegame);
         let json = serde_json::to_string_pretty(&game_info).unwrap();
+
+        match args.output {
+            Some(ref output_file_path) => {
+                let output_path = Path::new(output_file_path);
+                let mut file = File::create(output_path).unwrap();
+                writeln!(file, "{}", json).unwrap();
+            }
+            None => {
+                println!("{}", json);
+            }
+        }
+    }
+
+    if args.summary {
+        let full_summary = savegame.get_summary();
+        let json = serde_json::to_string(&full_summary).unwrap();
 
         match args.output {
             Some(ref output_file_path) => {
@@ -80,7 +102,7 @@ fn main() {
 
     if args.operations {
         let ignore_sync = true;
-        let ops = parse_operations(input_file_path.to_string(), 1000000, ignore_sync);
+        let ops = parse_operations(savegame, 1000000, ignore_sync);
         
         match args.output {
             Some(ref output_file_path) => {
@@ -99,9 +121,7 @@ fn main() {
     }
 }
 
-pub fn parse_summary(path: String) -> GameInfo {
-    let savegame = Savegame::from_file(Path::new(&path)).unwrap();
-
+pub fn parse_summary(savegame: &Savegame) -> GameInfo {
     let s = savegame.get_summary();
     let teams = s.teams;
 
@@ -203,9 +223,7 @@ pub fn parse_summary(path: String) -> GameInfo {
     return game_info;
 }
 
-pub fn parse_operations(path: String, max_operations: usize, ignore_sync: bool) -> impl Iterator<Item = String> {
-    let savegame = Savegame::from_file(Path::new(&path)).unwrap();
-
+pub fn parse_operations(savegame: Savegame, max_operations: usize, ignore_sync: bool) -> impl Iterator<Item = String> {
     savegame
         .operations
         .into_iter()
@@ -237,16 +255,6 @@ pub fn parse_operations(path: String, max_operations: usize, ignore_sync: bool) 
             }
             // other => None,
         })
-}
-
-fn action_data_name(action_data: &ActionData) -> String {
-    let debug = format!("{:?}", action_data);
-    debug
-        .split('{')
-        .next()
-        .unwrap_or(&debug)
-        .trim()
-        .to_string()
 }
 
 // fn get_player_actions(savegame: &Savegame, player_id: u8) -> Vec<ActionData> {
